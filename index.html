@@ -3,36 +3,11 @@
 <head>
     <title>Simple Roblox Messenger</title>
     <style>
-        body { 
-            font-family: Arial; 
-            text-align: center; 
-            margin: 50px; 
-            background: #f0f0f0;
-        }
-        .container { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 10px; 
-            display: inline-block;
-        }
-        button { 
-            margin: 10px; 
-            padding: 15px 25px; 
-            font-size: 18px; 
-            cursor: pointer;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        button:disabled { 
-            background: #ccc; 
-            cursor: not-allowed; 
-        }
-        #status { 
-            margin-top: 15px; 
-            font-weight: bold;
-        }
+        body { font-family: Arial; text-align: center; margin: 50px; background: #f0f0f0; }
+        .container { background: white; padding: 20px; border-radius: 10px; display: inline-block; }
+        button { margin: 10px; padding: 15px 25px; font-size: 18px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #status { margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -41,7 +16,7 @@
         <button onclick="sendMessage(1)">Send Message 1</button><br>
         <button onclick="sendMessage(2)">Send Message 2</button><br>
         <button onclick="sendMessage(3)">Send Message 3</button>
-        <div id="status"></div>
+        <div id="status">Ready</div>
     </div>
 
     <script>
@@ -49,14 +24,13 @@
 
         async function sendMessage(messageNumber) {
             if (cooldown) {
-                showStatus("Please wait 10 seconds between messages");
+                showStatus("Wait 10 seconds");
                 return;
             }
 
-            // Set cooldown
             cooldown = true;
             updateButtons(true);
-            showStatus("Sending message " + messageNumber + "...");
+            showStatus("Sending...");
 
             try {
                 const response = await fetch('/api/send-message', {
@@ -65,23 +39,27 @@
                     body: JSON.stringify({ message: messageNumber })
                 });
 
-                const data = await response.json();
-                
                 if (response.ok) {
                     showStatus("✓ Sent message " + messageNumber);
                 } else {
-                    showStatus("Error: " + data.error);
+                    showStatus("Error sending");
                 }
             } catch (error) {
                 showStatus("Failed to send");
             }
 
-            // Start 10 second cooldown
-            setTimeout(() => {
-                cooldown = false;
-                updateButtons(false);
-                showStatus("Ready to send");
-            }, 10000);
+            // 10 second cooldown
+            let secondsLeft = 10;
+            const countdown = setInterval(() => {
+                secondsLeft--;
+                showStatus("Wait " + secondsLeft + "s");
+                if (secondsLeft <= 0) {
+                    clearInterval(countdown);
+                    cooldown = false;
+                    updateButtons(false);
+                    showStatus("Ready");
+                }
+            }, 1000);
         }
 
         function updateButtons(disabled) {
