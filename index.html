@@ -1,141 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Message Sender</title>
+    <title>Simple Roblox Messenger</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+        body { 
+            font-family: Arial; 
+            text-align: center; 
+            margin: 50px; 
+            background: #f0f0f0;
         }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .container { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            display: inline-block;
         }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            resize: vertical;
-            font-size: 14px;
-        }
-        button {
-            background-color: #007bff;
+        button { 
+            margin: 10px; 
+            padding: 15px 25px; 
+            font-size: 18px; 
+            cursor: pointer;
+            background: #007bff;
             color: white;
-            padding: 12px 30px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
         }
-        button:hover {
-            background-color: #0056b3;
+        button:disabled { 
+            background: #ccc; 
+            cursor: not-allowed; 
         }
-        button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        .status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        #status { 
+            margin-top: 15px; 
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Roblox Message Sender</h1>
-        <div class="form-group">
-            <label for="message">Message to send to Roblox:</label>
-            <textarea id="message" placeholder="Enter your message here..."></textarea>
-        </div>
-        <button id="submitBtn" onclick="sendMessage()">Send Message</button>
+        <h2>Send Message to Roblox</h2>
+        <button onclick="sendMessage(1)">Send Message 1</button><br>
+        <button onclick="sendMessage(2)">Send Message 2</button><br>
+        <button onclick="sendMessage(3)">Send Message 3</button>
         <div id="status"></div>
     </div>
 
     <script>
-        async function sendMessage() {
-            const message = document.getElementById('message').value;
-            const submitBtn = document.getElementById('submitBtn');
-            const statusDiv = document.getElementById('status');
-            
-            if (!message.trim()) {
-                showStatus('Please enter a message', 'error');
+        let cooldown = false;
+
+        async function sendMessage(messageNumber) {
+            if (cooldown) {
+                showStatus("Please wait 10 seconds between messages");
                 return;
             }
-            
-            // Disable button and show loading
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Sending...';
-            statusDiv.innerHTML = '';
-            
+
+            // Set cooldown
+            cooldown = true;
+            updateButtons(true);
+            showStatus("Sending message " + messageNumber + "...");
+
             try {
-                // Replace with your Vercel backend URL after deployment
                 const response = await fetch('/api/send-message', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        gameId: 'YOUR_GAME_ID' // Replace with your actual game ID
-                    })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ message: messageNumber })
                 });
-                
+
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showStatus('Message sent successfully!', 'success');
-                    document.getElementById('message').value = '';
+                    showStatus("✓ Sent message " + messageNumber);
                 } else {
-                    showStatus(`Error: ${data.error}`, 'error');
+                    showStatus("Error: " + data.error);
                 }
             } catch (error) {
-                showStatus('Failed to send message. Please try again.', 'error');
-                console.error('Error:', error);
-            } finally {
-                // Re-enable button
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Send Message';
+                showStatus("Failed to send");
             }
+
+            // Start 10 second cooldown
+            setTimeout(() => {
+                cooldown = false;
+                updateButtons(false);
+                showStatus("Ready to send");
+            }, 10000);
         }
-        
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
-            statusDiv.className = `status ${type}`;
+
+        function updateButtons(disabled) {
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.textContent.includes("Send Message")) {
+                    btn.disabled = disabled;
+                }
+            });
+        }
+
+        function showStatus(text) {
+            document.getElementById('status').textContent = text;
         }
     </script>
 </body>
